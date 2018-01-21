@@ -30,7 +30,7 @@ class CapsLayer:
         This function will receive the input to the CapsLayer
         and compute the output.
         The input is a 3-D Tensor with shape (batch_size, count1, dim1).
-        The output is a 3-D Tnesor with shape (batch_size, count2, dim2).
+        The output is a 3-D Tensor with shape (batch_size, count2, dim2).
         '''
 
         # check if shapes from input agree with given count1 and dim1

@@ -5,16 +5,16 @@ class ConvCapsLayer:
 
     '''
     This class will implement a convolution to capsule layer.
-    As input it will take the kernel size for the convolution and the
-    dimensions and number of channels of the capusles.
+    As input it will take the kernel size, stride and padding for the
+    convolution and the dimensions and number of channels of the capusles.
     '''
 
-    def __init__(self, kernel_size, stride, dim, channels, padding):
+    def __init__(self, kernel_size, stride, padding, dimension, channels):
 
         # assign the given parameters
         self.k_size = kernel_size
         self.stride = stride
-        self.dim = dim
+        self.dim = dimension
         self.channels_out = channels
         self.padding = padding
 
@@ -34,7 +34,7 @@ class ConvCapsLayer:
         # get the batch size from the input
         self.batch_size = int(input.get_shape()[0])
         self.channels_in = int(input.get_shape()[3])
-        print(self.channels_in)
+
 
         # creating the weight and the bias tensor
         self.weights = tf.Variable(
