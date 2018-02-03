@@ -37,7 +37,7 @@ class DenseLayer:
         self.weights = tf.Variable(
                          tf.truncated_normal(
                            shape = [self.n_in, self.n_out],
-                           stddev = 0.1
+                           stddev = 0.01
                          )
                        )
 
