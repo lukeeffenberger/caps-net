@@ -7,7 +7,7 @@ from layers.convlayer import ConvLayer
 from layers.denselayer import DenseLayer
 from wrappers.mnisthelper import MNIST
 
-mnist_data = MNIST('/home/luke/CogSci/data/mnist/')
+mnist_data = MNIST('./mnist_data')
 
 #TRAINING PARAMS
 EPOCHS = 50
