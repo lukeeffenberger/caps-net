@@ -126,6 +126,7 @@ def main():
                                                      label_placeholder: y})
                 validation_writer.add_summary(_summaries, step)
 
+            print("Loss: {}".format(_loss))
             if _loss < best_validation_loss:
                 save_path = saver.save(sess, "./tmp/model.ckpt")
                 best_validation_loss = _loss
