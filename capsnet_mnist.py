@@ -1,4 +1,4 @@
-import numpy as np
+# import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from layers.capslayer import CapsLayer
@@ -117,7 +117,7 @@ def main():
                                                             label_placeholder: y})
                 train_writer.add_summary(_summaries, step)
                 step += 1
-                
+
             validation_generator = mnist_data.get_validation_batch(BATCH_SIZE)
             for x, y in validation_generator:
                 _summaries, _loss = sess.run([merged_summaries, total_loss],
