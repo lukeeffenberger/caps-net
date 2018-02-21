@@ -10,17 +10,15 @@ from wrappers.mnisthelper import MNIST
 mnist_data = MNIST('./mnist_data')
 
 #TRAINING PARAMS
-EPOCHS = 100
-TRAINING_BATCH_SIZE = 128
-VALIDATION_BATCH_SIZE = 6000 #CHANGE TO BE READ OUT FROM CLASS
+EPOCHS = 50
+BATCH_SIZE = 128
 
 def main():
     tf.reset_default_graph()
 
     # define the placeholders
-    image_placeholder = tf.placeholder(dtype=tf.float32, shape=[None, 28, 28])
-    label_placeholder = tf.placeholder(dtype=tf.int64, shape=[None])
-    batch_size = tf.shape(image_placeholder)[0]
+    image_placeholder = tf.placeholder(dtype=tf.float32, shape=[BATCH_SIZE, 28, 28])
+    label_placeholder = tf.placeholder(dtype=tf.int64, shape=[BATCH_SIZE])
 
     with tf.variable_scope('ReLU_Conv1'):
         image_reshaped = tf.expand_dims(image_placeholder, axis=-1)
@@ -78,7 +76,7 @@ def main():
                             activation_function = 'Sigmoid'
                         )
         dense_3 = dense_3_layer(dense_2)
-        reconstructions = tf.reshape(dense_3, shape=[batch_size, 28, 28])
+        reconstructions = tf.reshape(dense_3, shape=[BATCH_SIZE, 28, 28])
 
     with tf.variable_scope('Reconstruction_Loss'):
         reconstruction_loss = calculate_reconstruction_loss(dense_3, image_placeholder)
@@ -108,7 +106,7 @@ def main():
         for epoch in range(EPOCHS):
             print("Epoch {}...".format(epoch))
 
-            training_generator = mnist_data.get_training_batch(TRAINING_BATCH_SIZE)
+            training_generator = mnist_data.get_training_batch(BATCH_SIZE)
             for x, y in training_generator:
                 _loss, _accuracy, _, _summaries  = sess.run([loss,
                                                 accuracy,
@@ -116,12 +114,11 @@ def main():
                                                 merged_summaries
                                                 ],
                                                 feed_dict = {image_placeholder: x,
-                                                             label_placeholder: y})
+                                                            label_placeholder: y})
                 train_writer.add_summary(_summaries, step)
                 step += 1
-            
 
-            validation_generator = mnist_data.get_validation_batch(VALIDATION_BATCH_SIZE)
+            validation_generator = mnist_data.get_validation_batch(BATCH_SIZE)
             for x, y in validation_generator:
                 _summaries, _loss = sess.run([merged_summaries, total_loss],
                                         feed_dict = {image_placeholder: x,
@@ -139,9 +136,8 @@ def mask_and_flatten_digit_caps(digit_caps, labels):
     labels = tf.expand_dims(labels, axis=-1)
     labels = tf.tile(labels, [1,1,16])
     masked_digit_caps = digit_caps * labels
-    batch_size = tf.shape(labels)[0]
-    masked_and_flat = tf.reshape(masked_digit_caps, shape=[batch_size,10*16])
-    return tf.reshape(masked_digit_caps, shape=[batch_size,10*16])
+    masked_and_flat = tf.reshape(masked_digit_caps, shape=[BATCH_SIZE,10*16])
+    return tf.reshape(masked_digit_caps, shape=[BATCH_SIZE,10*16])
 
 def calculate_loss_accuracy(digit_caps, labels):
     length_digit_caps = tf.norm(digit_caps, axis = 2)
@@ -156,8 +152,7 @@ def calculate_loss_accuracy(digit_caps, labels):
 
 def calculate_reconstruction_loss(reconstructions, images):
     images = images/255.0
-    batch_size = tf.shape(images)[0]
-    images_flatten = tf.reshape(images, shape=[batch_size, 784])
+    images_flatten = tf.reshape(images, shape=[BATCH_SIZE, 784])
     squared_error = tf.squared_difference(reconstructions, images_flatten)
     sse = tf.reduce_sum(squared_error, axis=-1)
     return 0.0005 * tf.reduce_mean(sse)

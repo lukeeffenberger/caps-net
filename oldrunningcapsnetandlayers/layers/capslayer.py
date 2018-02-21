@@ -43,7 +43,7 @@ class CapsLayer:
                             )
 
         # get the batch size from the input
-        self.batch_size = tf.shape(input)[0]
+        self.batch_size = int(input.get_shape()[0])
 
         c1, d1 = self.count1, self.dim1
         c2, d2 = self.count2, self.dim2

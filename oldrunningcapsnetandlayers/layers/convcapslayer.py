@@ -32,7 +32,7 @@ class ConvCapsLayer:
 
 
         # get the batch size from the input
-        self.batch_size = tf.shape(input)[0]
+        self.batch_size = int(input.get_shape()[0])
         self.channels_in = int(input.get_shape()[3])
 
 
