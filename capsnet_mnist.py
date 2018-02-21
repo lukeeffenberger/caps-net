@@ -117,14 +117,14 @@ def main():
                                                             label_placeholder: y})
                 train_writer.add_summary(_summaries, step)
                 step += 1
-                print("Step {}: Loss: {}, Accuracy: {}".format(step, _loss, _accuracy))
-
-            validation_generator = mnist_data.get_validation_batch(-1)
+                
+            validation_generator = mnist_data.get_validation_batch(BATCH_SIZE)
             for x, y in validation_generator:
                 _summaries, _loss = sess.run([merged_summaries, total_loss],
                                         feed_dict = {image_placeholder: x,
                                                      label_placeholder: y})
                 validation_writer.add_summary(_summaries, step)
+                step += 1
 
             print("Loss: {}".format(_loss))
             if _loss < best_validation_loss:

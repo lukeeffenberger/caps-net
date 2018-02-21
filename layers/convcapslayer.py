@@ -86,7 +86,7 @@ class ConvCapsLayer:
         # vector along the specified axis stored in every component of this
         # vector, norm is the euclidean norm here
 
-        norm = tf.norm(tensor, keepdims=True, axis=2)
+        norm = tf.norm(tensor, keep_dims=True, axis=2)
         normed_tensor = tensor/norm
 
         squashing_factor = norm**2/(1+norm**2)

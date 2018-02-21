@@ -4,6 +4,7 @@
 #$ -cwd
 #$ -l cuda=1
 #$ -l cuda_cores=386
+#$ -l nv_mem_total=6G
 #$ -j y
 
 echo "*** Start of SGE job ***"
