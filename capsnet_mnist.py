@@ -1,6 +1,4 @@
-# import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
 from layers.capslayer import CapsLayer
 from layers.convcapslayer import ConvCapsLayer
 from layers.convlayer import ConvLayer
@@ -10,9 +8,9 @@ from wrappers.mnisthelper import MNIST
 mnist_data = MNIST('./mnist_data')
 
 #TRAINING PARAMS
-EPOCHS = 100
+EPOCHS = 200
 TRAINING_BATCH_SIZE = 128
-VALIDATION_BATCH_SIZE = 6000 #CHANGE TO BE READ OUT FROM CLASS
+VALIDATION_BATCH_SIZE = -1
 
 def main():
     tf.reset_default_graph()
@@ -45,8 +43,6 @@ def main():
 
     with tf.variable_scope('Digit_Caps'):
         digit_caps_layer = CapsLayer(
-                                count1 = 6*6*32,
-                                dim1 = 8,
                                 count2 = 10,
                                 dim2 = 16,
                                 rout_iter = 3
@@ -119,7 +115,6 @@ def main():
                                                              label_placeholder: y})
                 train_writer.add_summary(_summaries, step)
                 step += 1
-            
 
             validation_generator = mnist_data.get_validation_batch(VALIDATION_BATCH_SIZE)
             for x, y in validation_generator:
@@ -127,7 +122,6 @@ def main():
                                         feed_dict = {image_placeholder: x,
                                                      label_placeholder: y})
                 validation_writer.add_summary(_summaries, step)
-                step += 1
 
             print("Loss: {}".format(_loss))
             if _loss < best_validation_loss:

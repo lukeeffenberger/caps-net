@@ -13,11 +13,9 @@ class CapsLayer:
     In the call function the input tensor will be given.
     '''
 
-    def __init__(self, count1, dim1, count2, dim2, rout_iter):
+    def __init__(self, count2, dim2, rout_iter):
 
         # assigning the given parameters for the layers
-        self.count1 = count1
-        self.dim1 = dim1
         self.count2 = count2
         self.dim2 = dim2
         self.rout_iter = rout_iter
@@ -33,17 +31,12 @@ class CapsLayer:
         The output is a 3-D Tensor with shape (batch_size, count2, dim2).
         '''
 
-        # check if shapes from input agree with given count1 and dim1
-        if(input.get_shape()[1] != self.count1 or
-           input.get_shape()[2] != self.dim1):
-            raise ValueError('Input should have shape (?,{},{}) but has shape {}'.format(self.count1,
-                                                                                        self.dim1,
-                                                                                        input.get_shape()
-                                                                                        )
-                            )
+        
 
         # get the batch size from the input
         self.batch_size = tf.shape(input)[0]
+        self.count1 = int(input.get_shape()[1])
+        self.dim1 = int(input.get_shape()[2])
 
         c1, d1 = self.count1, self.dim1
         c2, d2 = self.count2, self.dim2
@@ -71,7 +64,7 @@ class CapsLayer:
         # vector along the specified axis stored in every component of this
         # vector, norm is the euclidean norm here
 
-        norm = tf.norm(tensor, keep_dims=True, axis=2)
+        norm = tf.norm(tensor, keepdims=True, axis=2)
         normed_tensor = tensor/norm
 
         squashing_factor = norm**2/(1+norm**2)

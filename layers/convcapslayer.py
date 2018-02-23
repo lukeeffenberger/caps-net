@@ -18,7 +18,6 @@ class ConvCapsLayer:
         self.channels_out = channels
         self.padding = padding
 
-
     def __call__(self, input):
 
         '''
@@ -30,11 +29,9 @@ class ConvCapsLayer:
         height2*width2*channels_o, dim).
         '''
 
-
         # get the batch size from the input
         self.batch_size = tf.shape(input)[0]
         self.channels_in = int(input.get_shape()[3])
-
 
         # creating the weight and the bias tensor
         self.weights = tf.Variable(
@@ -53,14 +50,12 @@ class ConvCapsLayer:
                                   )
                       )
 
-
         # convolution
         conv = tf.nn.conv2d(
                     input,
                     self.weights,
                     strides=[1, self.stride, self.stride, 1],
                     padding=self.padding)
-
         conv = conv + self.biases
 
         # read out the height and the with of the output
@@ -73,7 +68,6 @@ class ConvCapsLayer:
                                     self.dim
                                     ]
                     )
-
         capsules = self.squash(capsules)
 
         return capsules
@@ -86,7 +80,8 @@ class ConvCapsLayer:
         # vector along the specified axis stored in every component of this
         # vector, norm is the euclidean norm here
 
-        norm = tf.norm(tensor, keep_dims=True, axis=2)
+
+        norm = tf.norm(tensor, keepdims=True, axis=2)
         normed_tensor = tensor/norm
 
         squashing_factor = norm**2/(1+norm**2)
