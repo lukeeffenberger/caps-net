@@ -5,123 +5,151 @@ from layers.convlayer import ConvLayer
 from layers.denselayer import DenseLayer
 from wrappers.mnisthelper import MNIST
 
+# Importing the mnist data with a wrapper, that provides generator for training
+# and validation batches.
 mnist_data = MNIST('./mnist_data')
 
-#TRAINING PARAMS
+# Training Parameters
 EPOCHS = 200
 TRAINING_BATCH_SIZE = 128
-VALIDATION_BATCH_SIZE = -1
+VALIDATION_BATCH_SIZE = 1024
 
 def main():
-    tf.reset_default_graph()
+    '''
+    The data flow graph is designed and the training session is run.
+    '''
 
-    # define the placeholders
+    # Define the placeholders.
     image_placeholder = tf.placeholder(dtype=tf.float32, shape=[None, 28, 28])
     label_placeholder = tf.placeholder(dtype=tf.int64, shape=[None])
+    # Read out the batch size from the placeholders.
     batch_size = tf.shape(image_placeholder)[0]
 
+    # Convolutional layer.
     with tf.variable_scope('ReLU_Conv1'):
+        # Add fourth dimension (number of channels) to the images, because it is
+        # needed for convolution.
         image_reshaped = tf.expand_dims(image_placeholder, axis=-1)
-        conv_layer = ConvLayer(
+        convolution = ConvLayer(
                         kernel_size = 9,
                         stride = 1,
                         padding = 'VALID',
                         channels = 256,
                         activation_function = 'ReLU'
-                     )
-        conv = conv_layer(image_reshaped)
+                      )(image_reshaped)
 
+    # Primary Caps layer. Does another convolution and cuts it into capsules.
     with tf.variable_scope('Primary_Caps'):
-        primary_caps_layer = ConvCapsLayer(
-                                kernel_size = 9,
-                                stride = 2,
-                                padding = 'VALID',
-                                dimension = 8,
-                                channels = 32,
-                            )
-        primary_caps = primary_caps_layer(conv)
+        primary_caps = ConvCapsLayer(
+                            kernel_size = 9,
+                            stride = 2,
+                            padding = 'VALID',
+                            dimension = 8,
+                            channels = 32,
+                        )(convolution)
 
+    # Digit Caps layer. Basically the readout layer, that decides if the network
+    # recognized a certain digit or not.
     with tf.variable_scope('Digit_Caps'):
-        digit_caps_layer = CapsLayer(
-                                count2 = 10,
-                                dim2 = 16,
-                                rout_iter = 3
-                            )
-        digit_caps = digit_caps_layer(primary_caps)
+        digit_caps = CapsLayer(
+                            count2 = 10,
+                            dim2 = 16,
+                            rout_iter = 3
+                     )(primary_caps)
 
+    # Calculate the loss and the accuracy of the read out.
     with tf.variable_scope('Loss'):
         loss, accuracy = calculate_loss_accuracy(digit_caps, label_placeholder)
 
-    #RECONSTRUCTOR
+    # Reconstructor that reconstructs the image from the representation of the
+    # digit capsules. Consist of three dense layers.
     with tf.variable_scope('Dense1'):
+        # Mask out (set to zero) all but the correct digit capsule and flatten
+        # the tensor for the dense layer.
         digit_caps_flat = mask_and_flatten_digit_caps(digit_caps, label_placeholder)
-        dense_1_layer = DenseLayer(
-                            n_out = 512,
-                            activation_function = 'ReLU'
-                        )
-        dense_1 = dense_1_layer(digit_caps_flat)
+        dense_1 = DenseLayer(
+                        n_out = 512,
+                        activation_function = 'ReLU'
+                  )(digit_caps_flat)
 
     with tf.variable_scope('Dense2'):
-        dense_2_layer = DenseLayer(
-                            n_out = 1024,
-                            activation_function = 'ReLU'
-                        )
-        dense_2 = dense_2_layer(dense_1)
+        dense_2 = DenseLayer(
+                        n_out = 1024,
+                        activation_function = 'ReLU'
+                  )(dense_1)
 
     with tf.variable_scope('Dense3'):
-        dense_3_layer = DenseLayer(
-                            n_out = 28*28,
-                            activation_function = 'Sigmoid'
-                        )
-        dense_3 = dense_3_layer(dense_2)
+        dense_3 = DenseLayer(
+                        n_out = 28*28,
+                        activation_function = 'Sigmoid'
+                  )(dense_2)
+        # Reshape the output of this layer to same shape as the original image,
+        # to obtain the reconstruction.
         reconstructions = tf.reshape(dense_3, shape=[batch_size, 28, 28])
 
+    # Calculate the loss of the reconstruction.
     with tf.variable_scope('Reconstruction_Loss'):
         reconstruction_loss = calculate_reconstruction_loss(dense_3, image_placeholder)
 
+    # Set AdamOptimizer with default values (as described in the paper) as
+    # optimizer. It minimizes the sum of the loss and the reconstruction loss.
     with tf.variable_scope('Optimizer'):
         optimizer = tf.train.AdamOptimizer()
         total_loss = loss + reconstruction_loss
         training_step = optimizer.minimize(total_loss)
 
-    #SUMMARIES
+    # Define which nodes to save, to display later in tensorboard.
     tf.summary.scalar('loss', loss)
     tf.summary.scalar('accuracy', accuracy)
     tf.summary.scalar('reconstruction_loss', reconstruction_loss)
     tf.summary.scalar('total_loss', total_loss)
     merged_summaries = tf.summary.merge_all()
 
-    #WRITER AND SAVER
+    # Define the tensorflow "writer" for tensorboard and the tensorflow "saver"
+    # to save the learned weights.
     train_writer = tf.summary.FileWriter("./summaries/train", tf.get_default_graph())
     validation_writer = tf.summary.FileWriter("./summaries/validation", tf.get_default_graph())
     saver = tf.train.Saver()
 
+    # Session to train the model.
     with tf.Session() as sess:
+        # Count steps for displaying in tensorboard.
         step = 0
+        # Initialize best loss to infinity to be able to compare the current
+        # validation loss to the best validation loss so far and store the
+        # weights only if the mode was better.
         best_validation_loss = float('inf')
+        # Initialize all variables.
         sess.run(tf.global_variables_initializer())
 
+        # Train the network for the specified number of epochs.
         for epoch in range(EPOCHS):
+            # Print current epoch number for verifying that the network trains.
             print("Epoch {}...".format(epoch))
 
+            # Initialize a generator for training batches of specified size.
             training_generator = mnist_data.get_training_batch(TRAINING_BATCH_SIZE)
-            for x, y in training_generator:
-                _loss, _accuracy, _, _summaries  = sess.run([loss,
-                                                accuracy,
-                                                training_step,
-                                                merged_summaries
-                                                ],
-                                                feed_dict = {image_placeholder: x,
-                                                             label_placeholder: y})
+            # For all batches train the network.
+            for image_samples, label_samples in training_generator:
+                _, _summaries  = sess.run(
+                                    [training_step,merged_summaries],
+                                    feed_dict = {image_placeholder: image_samples,
+                                                 label_placeholder: label_samples}
+                                  )
+                # Save the summaries.
                 train_writer.add_summary(_summaries, step)
+                # Count step number one up.
                 step += 1
 
+            # Initialize a generator for validation batches.
             validation_generator = mnist_data.get_validation_batch(VALIDATION_BATCH_SIZE)
             for x, y in validation_generator:
+
                 _summaries, _loss = sess.run([merged_summaries, total_loss],
                                         feed_dict = {image_placeholder: x,
                                                      label_placeholder: y})
                 validation_writer.add_summary(_summaries, step)
+                break
 
             print("Loss: {}".format(_loss))
             if _loss < best_validation_loss:
