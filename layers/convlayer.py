@@ -3,70 +3,59 @@ import tensorflow as tf
 
 
 class ConvLayer:
+    """This class will implement a simple convolutional layer.
 
-    '''
-    This class will implement a convolutional layer.
-    As input it will take the kernel size, stride and padding for the
-    convolution, the number of output channels and the activation function.
-    '''
+    As input it will take the parameters for the convolution (kernel size,
+    stride and padding), the number of channels it should have and the
+    acitvation function that should be applied.
+    """
 
-
-    def __init__(self, kernel_size,
-            stride, padding, channels, activation_function = None
+    def __init__(
+            self, kernel_size,stride, padding, channels, activation_function = None
         ):
-
-        # assign the given parameters
+        """Assign the parameters."""
         self.k_size = kernel_size
         self.stride = stride
         self.padding = padding
         self.channels_out = channels
         self.activation_function = activation_function
 
-
-
     def __call__(self, input):
+        """Computes the output of the layer.
 
-        '''
-        This function will receive the input to the ConvLayer
-        and compute the output.
-        The input is a 4-D Tensor with shape (batch_size, height, width,
-        channels).
-        The output is also a 4-D Tensor.
-        '''
-
-        # get the batch size from the input
+        The input is a 4-D Tensor with shape [batch_size, height_in, width_in,
+        channels_in).
+        The output is a 4-D Tensor with shape [batch_size, height_out, width_out,
+        channels_out).
+        """
+        # Read out the batch size and the number of channels coming in from
+        # the input.
         self.batch_size = tf.shape(input)[0]
         self.channels_in = int(input.get_shape()[3])
 
-
-        # creating the weight and the bias tensor
+        # Create the weights and the bias tensor for the convolution.
         self.weights = tf.Variable(
                          tf.truncated_normal(
-                           shape = [self.k_size,
+                           shape = [
+                                self.k_size,
                                 self.k_size,
                                 self.channels_in,
                                 self.channels_out
-                                ],
+                           ],
                            stddev = 0.1
                          )
                        )
+        self.biases = tf.Variable(tf.constant(1.0, shape=[self.channels_out]))
 
-        self.biases = tf.Variable(tf.constant(1.0,
-                                        shape=[self.channels_out]
-                                  )
-                      )
-
-
-        # convolution
+        # Convolution.
         conv = tf.nn.conv2d(
-                    input,
-                    self.weights,
+                    input=input,
+                    filter=self.weights,
                     strides=[1, self.stride, self.stride, 1],
                     padding=self.padding)
-
         conv = conv + self.biases
-
-
+        # Apply the given activation function.
         if self.activation_function == 'ReLU':
             return tf.nn.relu(conv)
-        return conv
+        else:
+            return conv

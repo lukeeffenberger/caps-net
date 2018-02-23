@@ -15,9 +15,10 @@ TRAINING_BATCH_SIZE = 128
 VALIDATION_BATCH_SIZE = 1024
 
 def main():
-    '''
+    """ Training CapsNet.
+
     The data flow graph is designed and the training session is run.
-    '''
+    """
 
     # Define the placeholders.
     image_placeholder = tf.placeholder(dtype=tf.float32, shape=[None, 28, 28])
@@ -89,7 +90,7 @@ def main():
 
     # Calculate the loss of the reconstruction.
     with tf.variable_scope('Reconstruction_Loss'):
-        reconstruction_loss = calculate_reconstruction_loss(dense_3, image_placeholder)
+        reconstruction_loss = calculate_reconstruction_loss(reconstructions, image_placeholder)
 
     # Set AdamOptimizer with default values (as described in the paper) as
     # optimizer. It minimizes the sum of the loss and the reconstruction loss.
@@ -143,46 +144,82 @@ def main():
 
             # Initialize a generator for validation batches.
             validation_generator = mnist_data.get_validation_batch(VALIDATION_BATCH_SIZE)
-            for x, y in validation_generator:
-
-                _summaries, _loss = sess.run([merged_summaries, total_loss],
-                                        feed_dict = {image_placeholder: x,
-                                                     label_placeholder: y})
+            for image_samples, label_samples in validation_generator:
+                _summaries, _loss = sess.run(
+                                        [merged_summaries, total_loss],
+                                        feed_dict = {image_placeholder: image_samples,
+                                                     label_placeholder: label_samples}
+                                    )
+                # Save the summaries.
                 validation_writer.add_summary(_summaries, step)
+                # Validate with only one batch.
                 break
 
+            # Print current loss for eyeballing training process.
             print("Loss: {}".format(_loss))
+            # Save weights, if the model had a lower validation loss than
+            # in the previous epochs.
             if _loss < best_validation_loss:
                 save_path = saver.save(sess, "./tmp/model.ckpt")
+                # Update the best loss so far.
                 best_validation_loss = _loss
 
 def mask_and_flatten_digit_caps(digit_caps, labels):
+    """Mask out and flat the digit caps.
+
+    All but the 16 values of the capsule corresponding to the correct label
+    are set to 0. Then the digit caps are reshaped from [batch_size, 10, 16] to
+    [batch_size, 10*16].
+    """
+    # Create a tensor in the same shape as the digit caps with ones at the
+    # entries that are corresponding to the entries for the correct label
+    # and zero everywhere else.
     labels = tf.one_hot(labels, depth=10)
     labels = tf.expand_dims(labels, axis=-1)
     labels = tf.tile(labels, [1,1,16])
+    # Mask out the digit caps.
     masked_digit_caps = digit_caps * labels
+    # Read out the batch size from the labels.
     batch_size = tf.shape(labels)[0]
+    # Flat the digit caps.
     masked_and_flat = tf.reshape(masked_digit_caps, shape=[batch_size,10*16])
-    return tf.reshape(masked_digit_caps, shape=[batch_size,10*16])
+    return masked_and_flat
 
 def calculate_loss_accuracy(digit_caps, labels):
+    """Calculate the loss and the accuracy.
+
+    The loss implements the loss from the paper. For more information check our
+    report.
+    Accuracy is computed by taking the digit with "longest" capsule, meaning the
+    digit where the model is the most sure, that it is in the image, as the
+    prediction of the network.
+    """
+    # Compute the length (euclidean norm) of the digit capsules.
     length_digit_caps = tf.norm(digit_caps, axis = 2)
     labels_one_hot = tf.one_hot(labels, depth=10)
+    # Compute the false negative part of the loss.
     plus_loss =  labels_one_hot * tf.nn.relu(0.9 - length_digit_caps)
+    # Compute the fals positive part of the loss.
     minus_loss = 0.5 * (1 - labels_one_hot) * tf.nn.relu(length_digit_caps - 0.1)
+    # Compute the loss from those two parts
     loss = tf.reduce_sum(plus_loss + minus_loss, axis=-1)
     loss = tf.reduce_mean(loss)
+    # Compute accuracy by comparing indices of longest capusle to the labels.
     correct_prediction = tf.equal(tf.argmax(length_digit_caps, 1), labels)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     return loss, accuracy
 
 def calculate_reconstruction_loss(reconstructions, images):
+    """Calculate the loss of the reconstruction."""
+    # As the reconstructor has a sigmoid read out layer scale pixel intensties
+    # of the images down to [0,1].
     images = images/255.0
-    batch_size = tf.shape(images)[0]
-    images_flatten = tf.reshape(images, shape=[batch_size, 784])
-    squared_error = tf.squared_difference(reconstructions, images_flatten)
-    sse = tf.reduce_sum(squared_error, axis=-1)
-    return 0.0005 * tf.reduce_mean(sse)
+    # Compute the sum squared error between reconstruction and original image.
+    squared_error = tf.squared_difference(reconstructions, images)
+    sum_squared_error = tf.reduce_sum(squared_error, axis=-1)
+    # Scale down the reconstruction loss to let it not dominate the loss.
+    reconstruction_loss = 0.0005 * tf.reduce_mean(sum_squared_error)
+    return reconstruction_loss
 
 if __name__ == '__main__':
     main()
