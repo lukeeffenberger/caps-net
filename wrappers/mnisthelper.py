@@ -37,7 +37,7 @@ class MNIST():
         for i in range(self._training_samples_n // batch_size):
             on = i * batch_size
             off = on + batch_size
-            yield data[on:off], labels[on:off]
+            yield training_images[on:off], training_labels[on:off]
 
     def get_validation_batch(self, batch_size):
         return self._test_images[:batch_size], self._test_labels[:batch_size]
