@@ -5,11 +5,11 @@ import numpy as np
 class MNIST():
     def __init__(self, directory):
         self._directory = directory
-
-        self._training_data = self._load_binaries("./train-images.idx3-ubyte")
+        self._training_images = self._load_binaries("./train-images.idx3-ubyte")
         self._training_labels = self._load_binaries("./train-labels.idx1-ubyte")
-        self._test_data = self._load_binaries("./t10k-images.idx3-ubyte")
+        self._test_images = self._load_binaries("./t10k-images.idx3-ubyte")
         self._test_labels = self._load_binaries("./t10k-labels.idx1-ubyte")
+        self._training_samples_n = self._training_labels.shape[0]
 
     def _load_binaries(self, file_name):
         path = os.path.join(self._directory, file_name)
@@ -27,19 +27,17 @@ class MNIST():
                 raise ValueError("Not a MNIST file: " + path)
 
     def get_training_batch(self, batch_size):
-        samples_n = self._training_labels.shape[0]
-        if batch_size <= 0:
-            batch_size = samples_n
-
-        random_indices = np.random.choice(samples_n, samples_n, replace = False)
-        data = self._training_data[random_indices]
-        labels = self._training_labels[random_indices]
-        for i in range(samples_n // batch_size):
+        random_indices = np.random.choice(
+                                    a=self._training_samples_n,
+                                    size=self._training_samples_n,
+                                    replace = False
+                         )
+        training_images = self._training_images[random_indices]
+        training_labels = self._training_labels[random_indices]
+        for i in range(self._training_samples_n // batch_size):
             on = i * batch_size
             off = on + batch_size
             yield data[on:off], labels[on:off]
 
     def get_validation_batch(self, batch_size):
-        return self._test_data[:batch_size], self._test_labels[:batch_size]
-
-       
+        return self._test_images[:batch_size], self._test_labels[:batch_size]

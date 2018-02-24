@@ -123,29 +123,29 @@ def main():
         # Initialize all variables.
         sess.run(tf.global_variables_initializer())
 
-        # Get the validation batch.
-        image_samples, label_samples = mnist_data.get_validation_batch(VALIDATION_BATCH_SIZE)
-        # Validate the current performance.
-        _summaries, _loss = sess.run(
-                            [merged_summaries, total_loss],
-                            feed_dict = {image_placeholder: image_samples,
-                                         label_placeholder: label_samples}
-                                )
-        # Save the summaries.
-        validation_writer.add_summary(_summaries, step)
-        # Print current loss for eyeballing training process.
-        print("Loss: {}".format(_loss))
-        # Save weights, if the model had a lower validation loss than
-        # in the previous epochs.
-        if _loss < best_validation_loss:
-            save_path = saver.save(sess, "./tmp/model.ckpt")
-            # Update the best loss so far.
-            best_validation_loss = _loss
-
         # Train the network for the specified number of epochs.
         for epoch in range(EPOCHS):
             # Print current epoch number for verifying that the network trains.
             print("Epoch {}...".format(epoch))
+
+            # Get the validation batch.
+            image_samples, label_samples = mnist_data.get_validation_batch(VALIDATION_BATCH_SIZE)
+            # Validate the current performance.
+            _summaries, _loss = sess.run(
+                                [merged_summaries, total_loss],
+                                feed_dict = {image_placeholder: image_samples,
+                                             label_placeholder: label_samples}
+                                    )
+            # Save the summaries.
+            validation_writer.add_summary(_summaries, step)
+            # Print current loss for eyeballing training process.
+            print("Loss: {}".format(_loss))
+            # Save weights, if the model had a lower validation loss than
+            # in the previous epochs.
+            if _loss < best_validation_loss:
+                save_path = saver.save(sess, "./tmp/model.ckpt")
+                # Update the best loss so far.
+                best_validation_loss = _loss
 
             # Initialize a generator for training batches of specified size.
             training_generator = mnist_data.get_training_batch(TRAINING_BATCH_SIZE)
