@@ -10,7 +10,7 @@ from wrappers.mnisthelper import MNIST
 mnist_data = MNIST('./mnist_data')
 
 # Training Parameters
-EPOCHS = 200
+EPOCHS = 50
 TRAINING_BATCH_SIZE = 128
 VALIDATION_BATCH_SIZE = 1024
 
@@ -123,6 +123,25 @@ def main():
         # Initialize all variables.
         sess.run(tf.global_variables_initializer())
 
+        # Get the validation batch.
+        image_samples, label_samples = mnist_data.get_validation_batch(VALIDATION_BATCH_SIZE)
+        # Validate the current performance.
+        _summaries, _loss = sess.run(
+                            [merged_summaries, total_loss],
+                            feed_dict = {image_placeholder: image_samples,
+                                         label_placeholder: label_samples}
+                                )
+        # Save the summaries.
+        validation_writer.add_summary(_summaries, step)
+        # Print current loss for eyeballing training process.
+        print("Loss: {}".format(_loss))
+        # Save weights, if the model had a lower validation loss than
+        # in the previous epochs.
+        if _loss < best_validation_loss:
+            save_path = saver.save(sess, "./tmp/model.ckpt")
+            # Update the best loss so far.
+            best_validation_loss = _loss
+
         # Train the network for the specified number of epochs.
         for epoch in range(EPOCHS):
             # Print current epoch number for verifying that the network trains.
@@ -142,27 +161,7 @@ def main():
                 # Count step number one up.
                 step += 1
 
-            # Initialize a generator for validation batches.
-            validation_generator = mnist_data.get_validation_batch(VALIDATION_BATCH_SIZE)
-            for image_samples, label_samples in validation_generator:
-                _summaries, _loss = sess.run(
-                                        [merged_summaries, total_loss],
-                                        feed_dict = {image_placeholder: image_samples,
-                                                     label_placeholder: label_samples}
-                                    )
-                # Save the summaries.
-                validation_writer.add_summary(_summaries, step)
-                # Validate with only one batch.
-                break
 
-            # Print current loss for eyeballing training process.
-            print("Loss: {}".format(_loss))
-            # Save weights, if the model had a lower validation loss than
-            # in the previous epochs.
-            if _loss < best_validation_loss:
-                save_path = saver.save(sess, "./tmp/model.ckpt")
-                # Update the best loss so far.
-                best_validation_loss = _loss
 
 def mask_and_flatten_digit_caps(digit_caps, labels):
     """Mask out and flat the digit caps.
