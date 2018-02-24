@@ -12,7 +12,7 @@ mnist_data = MNIST('./mnist_data')
 # Training Parameters
 EPOCHS = 50
 TRAINING_BATCH_SIZE = 128
-VALIDATION_BATCH_SIZE = 1024
+VALIDATION_BATCH_SIZE = 600
 
 def main():
     """ Training CapsNet.
