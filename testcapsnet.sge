@@ -28,7 +28,7 @@ source /net/store/scratch/even/valid_until_28_feb_2018/pimv/miniconda_feb/bin/ac
 
 
 
-python capsnet_mnist_scaled.py
+python capsnet_mnist_test.py
 
 
 echo ""
