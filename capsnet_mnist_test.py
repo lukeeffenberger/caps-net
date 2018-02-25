@@ -71,16 +71,20 @@ def main():
         saver.restore(sess, "./tmp/model.ckpt")
 
         # Get the tets batch.
-        image_samples, label_samples = mnist_data.get_test_batch(TEST_BATCH_SIZE)
-        # Get the accuracy.
-        _accuracy = sess.run(
-                        [accuracy],
-                        feed_dict = {image_placeholder: image_samples,
-                                     label_placeholder: label_samples}
-                                )
+        test_generator = mnist_data.get_test_batch(TEST_BATCH_SIZE)
+        # Initialize list to store the accuracy of each batch.
+        accuracies = []
+        for image_samples, label_samples in test_generator:
+            # Get the accuracy.
+            _accuracy = sess.run(
+                            [accuracy],
+                            feed_dict = {image_placeholder: image_samples,
+                                         label_placeholder: label_samples}
+                                    )
+            accuracies.append(_accuracy)
 
-        # Print the test error.
-        test_error = 1-_accuracy[0]
+        # Get the overall test erro.
+        test_error = 1 - np.mean(accuracies)        
         print("Test error: {}".format(test_error))
 
 def calculate_loss_accuracy(digit_caps, labels):

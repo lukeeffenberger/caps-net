@@ -21,6 +21,14 @@ class MNIST():
         self._test_labels = self._load_binaries("./t10k-labels.idx1-ubyte")
         # Read out the number of training samples.
         self._training_samples_n = self._training_labels.shape[0]
+        # Define 600 of the test samples as validation samples.
+        self._validation_images = self._test_images[:600]
+        self._validation_labels = self._test_labels[:600]
+        # Define the remaining ones new as test samples.
+        self._test_images = self._test_images[600:]
+        self._test_labels = self._test_labels[600:]
+        # Read out the number of test samples.
+        self._test_samples_n = self._test_labels.shape[0]
 
     def _load_binaries(self, file_name):
         """Transform a specific binary file into a numpy array."""
@@ -69,15 +77,17 @@ class MNIST():
             batch = training_images[on:off], training_labels[on:off]
             yield batch
 
-    def get_validation_batch(self, batch_size):
-        """Get the validation batch.
-
-        As it is to validate the performance it should always be the same batch.
-        """
-        batch = self._test_images[:batch_size], self._test_labels[:batch_size]
-        return batch
+    def get_validation_batch(self):
+        """Get the validation batch."""
+        return self._validation_images, self._validation_labels
 
     def get_test_batch(self, batch_size):
-        """Get the test batch."""
-        batch = self._test_images[-batch_size:], self._test_labels[-batch_size:]
-        return batch
+        """Generator to provide the test batches."""
+        # For the number of batches.
+        for i in range(self._test_samples_n // batch_size):
+            # Compute the start and the end point of the batch.
+            on = i * batch_size
+            off = on + batch_size
+            # Create batch.
+            batch = self._test_images[on:off], self._test_labels[on:off]
+            yield batch

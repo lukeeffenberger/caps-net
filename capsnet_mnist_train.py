@@ -10,9 +10,8 @@ from wrappers.mnisthelper import MNIST
 mnist_data = MNIST('./mnist_data')
 
 # Training Parameters
-EPOCHS = 50
+EPOCHS = 30
 TRAINING_BATCH_SIZE = 128
-VALIDATION_BATCH_SIZE = 600
 
 def main():
     """ Training CapsNet.
@@ -129,7 +128,7 @@ def main():
             print("Epoch {}...".format(epoch))
 
             # Get the validation batch.
-            image_samples, label_samples = mnist_data.get_validation_batch(VALIDATION_BATCH_SIZE)
+            image_samples, label_samples = mnist_data.get_validation_batch()
             # Validate the current performance.
             _summaries, _loss = sess.run(
                                 [merged_summaries, total_loss],

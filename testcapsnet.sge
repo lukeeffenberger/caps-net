@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N log_train
+#$ -N log_test
 #$ -l mem=4G
 #$ -cwd
 #$ -l cuda=1
