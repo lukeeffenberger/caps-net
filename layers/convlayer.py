@@ -42,7 +42,7 @@ class ConvLayer:
                                 self.channels_in,
                                 self.channels_out
                            ],
-                           stddev = 0.1
+                           stddev = 0.01
                          )
                        )
         self.biases = tf.Variable(tf.constant(1.0, shape=[self.channels_out]))

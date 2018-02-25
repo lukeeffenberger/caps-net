@@ -41,7 +41,7 @@ class ConvCapsLayer:
                                 self.channels_in,
                                 self.dim * self.channels_out
                             ],
-                           stddev = 0.1
+                           stddev = 0.01
                          )
                        )
         self.biases = tf.Variable(tf.constant(1.0, shape=[self.dim*self.channels_out]))

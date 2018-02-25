@@ -31,7 +31,7 @@ class CapsLayer:
         self.weights = tf.Variable(
                          tf.truncated_normal(
                            shape = [self.count1, self.count2, self.dim1, self.dim2],
-                           stddev = 0.1
+                           stddev = 0.01
                          )
                        )
         # Compute the prediction vectors.
