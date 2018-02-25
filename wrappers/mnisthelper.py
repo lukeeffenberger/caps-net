@@ -76,3 +76,8 @@ class MNIST():
         """
         batch = self._test_images[:batch_size], self._test_labels[:batch_size]
         return batch
+
+    def get_test_batch(self, batch_size):
+        """Get the test batch."""
+        batch = self._test_images[-batch_size:], self._test_labels[-batch_size:]
+        return batch
