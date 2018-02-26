@@ -216,7 +216,7 @@ def calculate_reconstruction_loss(reconstructions, images):
     squared_error = tf.squared_difference(reconstructions, images)
     sum_squared_error = tf.reduce_sum(squared_error, axis=-1)
     # Scale down the reconstruction loss to let it not dominate the loss.
-    reconstruction_loss = 0.0005 * tf.reduce_mean(sum_squared_error)
+    reconstruction_loss = 0.0005 * 784 * tf.reduce_mean(sum_squared_error)
     return reconstruction_loss
 
 if __name__ == '__main__':
