@@ -122,8 +122,6 @@ def main():
         # validation loss to the best validation loss so far and store the
         # weights only if the mode was better.
         best_validation_loss = 0.015
-        # Initialize all variables.
-        sess.run(tf.global_variables_initializer())
 
         # Train the network for the specified number of epochs.
         for epoch in range(EPOCHS):
