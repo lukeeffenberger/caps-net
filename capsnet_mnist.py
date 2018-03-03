@@ -1,23 +1,33 @@
 import tensorflow as tf
+import numpy as np
+import argparse
 from layers.capslayer import CapsLayer
 from layers.convcapslayer import ConvCapsLayer
 from layers.convlayer import ConvLayer
 from layers.denselayer import DenseLayer
 from wrappers.mnisthelper import MNIST
 
-# Importing the mnist data with a wrapper, that provides generator for training
-# and validation batches.
+# Importing the mnist data with a wrapper, that provides generator for training,
+# validation and test batches.
 mnist_data = MNIST('./mnist_data')
 
 # Training Parameters
 EPOCHS = 30
 TRAINING_BATCH_SIZE = 128
+# Testing Parameters
+TEST_BATCH_SIZE = 10
 
 def main():
-    """ Training CapsNet.
+    """Training or testing CapsNet.
 
-    The data flow graph is designed and the training session is run.
+    The data flow graph is designed and the session is run.
+    If the mode is 'train_on' the weights are loaded from 'model_weights/'.
+    For both training modes the best model is saved in 'tmp/model_weights' and
+    the summaries from the training process are written to 'tmp/summaries'.
+    If the mode is 'test' the weights are loaded from 'model_weights/'.
     """
+    # Get the mode.
+    mode = parse_input()
 
     # Define the placeholders.
     image_placeholder = tf.placeholder(dtype=tf.float32, shape=[None, 28, 28])
@@ -98,69 +108,105 @@ def main():
         total_loss = loss + reconstruction_loss
         training_step = optimizer.minimize(total_loss)
 
-    # Define which nodes to save, to display later in tensorboard.
-    tf.summary.scalar('loss', loss)
-    tf.summary.scalar('accuracy', accuracy)
-    tf.summary.scalar('reconstruction_loss', reconstruction_loss)
-    tf.summary.scalar('total_loss', total_loss)
-    merged_summaries = tf.summary.merge_all()
+    # Training modes
+    if mode in ['train', 'train_on']:
+        # Define which nodes to save, to display later in tensorboard.
+        tf.summary.scalar('loss', loss)
+        tf.summary.scalar('accuracy', accuracy)
+        tf.summary.scalar('reconstruction_loss', reconstruction_loss)
+        tf.summary.scalar('total_loss', total_loss)
+        merged_summaries = tf.summary.merge_all()
 
-    # Define the tensorflow "writer" for tensorboard and the tensorflow "saver"
-    # to save the learned weights.
-    train_writer = tf.summary.FileWriter("./summaries/train", tf.get_default_graph())
-    validation_writer = tf.summary.FileWriter("./summaries/validation", tf.get_default_graph())
-    saver = tf.train.Saver()
+        # Define the tensorflow "writer" for tensorboard and the tensorflow "saver"
+        # to save the learned weights.
+        train_writer = tf.summary.FileWriter("./tmp/summaries/train", tf.get_default_graph())
+        validation_writer = tf.summary.FileWriter("./tmp/summaries/validation", tf.get_default_graph())
+        saver = tf.train.Saver()
 
-    # Session to train the model.
-    with tf.Session() as sess:
-        # Count steps for displaying in tensorboard.
-        step = 0
-        # Initialize best loss to infinity to be able to compare the current
-        # validation loss to the best validation loss so far and store the
-        # weights only if the mode was better.
-        best_validation_loss = float('inf')
-        # Initialize all variables.
-        sess.run(tf.global_variables_initializer())
+        # Session to train the model.
+        with tf.Session() as sess:
+            # The training mode without pretrained weights.
+            if mode == 'train':
+                # Count steps for displaying in tensorboard.
+                step = 0
+                # Initialize best loss to infinity to be able to compare the current
+                # validation loss to the best validation loss so far and store the
+                # weights only if the mode was better.
+                best_validation_loss = float('inf')
+                # Initialize all variables.
+                sess.run(tf.global_variables_initializer())
+            # The training mode with pretrained weights.
+            else:
+                # Count steps for displaying in tensorboard.
+                step = 30*np.ceil(60000.0/128.0)
+                # Restore the weights.
+                saver.restore(sess, "./model_weights/model.ckpt")
+                # Initialize best loss to infinity to be able to compare the current
+                # validation loss to the best validation loss so far and store the
+                # weights only if the mode was better.
+                best_validation_loss = 0.015
 
-        # Train the network for the specified number of epochs.
-        for epoch in range(EPOCHS):
-            # Print current epoch number for verifying that the network trains.
-            print("Epoch {}...".format(epoch))
+            # Train the network for the specified number of epochs.
+            for epoch in range(EPOCHS):
+                # Print current epoch number for verifying that the network trains.
+                print("Epoch {}...".format(epoch))
 
-            # Get the validation batch.
-            image_samples, label_samples = mnist_data.get_validation_batch()
-            # Validate the current performance.
-            _summaries, _loss = sess.run(
-                                [merged_summaries, total_loss],
-                                feed_dict = {image_placeholder: image_samples,
-                                             label_placeholder: label_samples}
-                                    )
-            # Save the summaries.
-            validation_writer.add_summary(_summaries, step)
-            # Print current loss for eyeballing training process.
-            print("Loss: {}".format(_loss))
-            # Save weights, if the model had a lower validation loss than
-            # in the previous epochs.
-            if _loss < best_validation_loss:
-                save_path = saver.save(sess, "./tmp/model.ckpt")
-                # Update the best loss so far.
-                best_validation_loss = _loss
-
-            # Initialize a generator for training batches of specified size.
-            training_generator = mnist_data.get_training_batch(TRAINING_BATCH_SIZE)
-            # For all batches train the network.
-            for image_samples, label_samples in training_generator:
-                _, _summaries  = sess.run(
-                                    [training_step,merged_summaries],
+                # Get the validation batch.
+                image_samples, label_samples = mnist_data.get_validation_batch()
+                # Validate the current performance.
+                _summaries, _loss = sess.run(
+                                    [merged_summaries, total_loss],
                                     feed_dict = {image_placeholder: image_samples,
                                                  label_placeholder: label_samples}
-                                  )
+                                        )
                 # Save the summaries.
-                train_writer.add_summary(_summaries, step)
-                # Count step number one up.
-                step += 1
+                validation_writer.add_summary(_summaries, step)
+                # Print current loss for eyeballing training process.
+                print("Loss: {}".format(_loss))
+                # Save weights, if the model had a lower validation loss than
+                # in the previous epochs.
+                if _loss < best_validation_loss:
+                    save_path = saver.save(sess, "./tmp/model_weights/model.ckpt")
+                    # Update the best loss so far.
+                    best_validation_loss = _loss
 
+                # Initialize a generator for training batches of specified size.
+                training_generator = mnist_data.get_training_batch(TRAINING_BATCH_SIZE)
+                # For all batches train the network.
+                for image_samples, label_samples in training_generator:
+                    _, _summaries  = sess.run(
+                                        [training_step,merged_summaries],
+                                        feed_dict = {image_placeholder: image_samples,
+                                                     label_placeholder: label_samples}
+                                      )
+                    # Save the summaries.
+                    train_writer.add_summary(_summaries, step)
+                    # Count step one up.
+                    step += 1
 
+    # Testing mode.
+    else:
+        # Define the tensorflow "saver" to restore the learned weights.
+        saver = tf.train.Saver()
+        # Session to train the model.
+        with tf.Session() as sess:
+             # Restore the weights from model.ckpt.
+            saver.restore(sess, "./model_weights/model.ckpt")
+            # Get the test batch.
+            test_generator = mnist_data.get_test_batch(TEST_BATCH_SIZE)
+            # Initialize list to store the accuracy of each batch.
+            accuracies = []
+            for image_samples, label_samples in test_generator:
+                # Get the accuracy.
+                _accuracy = sess.run(
+                                [accuracy],
+                                feed_dict = {image_placeholder: image_samples,
+                                             label_placeholder: label_samples}
+                                        )
+                accuracies.append(_accuracy)
+            # Get the overall test error.
+            test_error = 1 - np.mean(accuracies)
+            print("Test error: {}".format(test_error))
 
 def mask_and_flatten_digit_caps(digit_caps, labels):
     """Mask out and flat the digit caps.
@@ -218,6 +264,24 @@ def calculate_reconstruction_loss(reconstructions, images):
     # Scale down the reconstruction loss to let it not dominate the loss.
     reconstruction_loss = 0.0005 * 784 * tf.reduce_mean(sum_squared_error)
     return reconstruction_loss
+
+def parse_input():
+    """Parses the input.
+
+    One can specify if the model should be trained from scratch (train), trained on with
+    already pre-trained weights (train_on) or tested (test).
+    """
+    # Read in the arguments.
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m','--mode',
+                    help='Set the mode: train, train_on, test')
+    args = parser.parse_args()
+    # Check if the given argument for the mode is valid.
+    if args.mode not in ['train', 'train_on', 'test']:
+        # Raise an error if not.
+        raise ValueError('The given mode "{}" is not a valid mode. Use "train",\
+"train_on" or "test" instead.'.format(args.mode))
+    return args.mode
 
 if __name__ == '__main__':
     main()
