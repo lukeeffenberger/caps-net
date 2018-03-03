@@ -14,12 +14,20 @@ is found during the training process will be stored in `tmp/model_weights/`. The
 
 To have a look at the summaries in TensorBoard use `tensorboard --logdir=tmp/summaries`.
 
+<<<<<<< HEAD
 For testing the model stored in `model_weights/` use `python capsnet_mnist.py -m test`. The test error will simply
+=======
+For testing the model stored in `model_weights/` use `python capsnet_mnist.py -m test`. The test error will simply 
+>>>>>>> 64128b14e3934f426c82186b368486202103a0d0
 be printed in the console.
 
 ### What the dimension of the capsules represent
 To investigate the "meaning" of the dimensions of different capsules you can make use of our Jupyter Notebook
+<<<<<<< HEAD
 `dimension_representation.ipynb`. It loads the weights stored in `model_weights/`. You can open it with
+=======
+`dimension_representation.ipynb`. It loads the weights stored in `model_weights/`. You can open it with 
+>>>>>>> 64128b14e3934f426c82186b368486202103a0d0
 `jupyter notebook dimension_representation.ipynb`.
 
 There are two differenten functions in there:
@@ -29,7 +37,11 @@ There are two differenten functions in there:
 affirmate findings from the broad exploration before.
 
 ### Using the layer modules
+<<<<<<< HEAD
 We implemented the different layers in classes for easily constructing new capsule networks. These clases can be found in the
+=======
+We implemented the different layers in classes for easily constructing new capsule networks. These clases can be found in the 
+>>>>>>> 64128b14e3934f426c82186b368486202103a0d0
 folder `layers/`.
 
 You  can import a layer for example with `from layers.capslayer import CapsLayer`. This layer can then easily be integrated in the data flow graph, e.g.:
