@@ -2,6 +2,7 @@
 This project implements the most important parts from the paper **Dynamic Routing Between Capsules** by Sara Sabour,
 Nicholas Frosst and Geoffrey E. Hinton (2017). (https://arxiv.org/abs/1710.09829)
 Additionally you can find a report with an in-depth explanation of capsule neworks and our results under *report.pdf*.
+*report_exentended.pdf* is a slightly extended version of the same report, that features more and larger images and a very short exploration on applying CapsNet on breast cancer images.
 
 ## Usage
 First get a local copy of this repository on your machine with `git clone https://github.com/lukeeffenberger/caps-net.git`.
