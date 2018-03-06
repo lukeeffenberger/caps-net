@@ -1,15 +1,15 @@
 # CapsNet
 This project implements the most important parts from the paper **Dynamic Routing Between Capsules** by Sara Sabour,
-Nicholas Frosst and Geoffrey E. Hinton (2017). (https://arxiv.org/abs/1710.09829)
-Additionally you can find a report with an in-depth explanation of capsule neworks and our results under *report.pdf*. (Under *report_exentended.pdf* you find a slightly extended version of the same report, that features more and larger images and a very short exploration on applying CapsNet on breast cancer images.)
+Nicholas Frosst and Geoffrey E. Hinton (2017, https://arxiv.org/abs/1710.09829)
+Additionally you can find a report with an in-depth explanation of capsule neworks and our results under *report.pdf* (under *report_exentended.pdf* you will find a slightly extended version of the same report, that features more and larger images and a very short exploration on applying CapsNet to breast cancer images).
 
 ## Usage
-First get a local copy of this repository on your machine with `git clone https://github.com/lukeeffenberger/caps-net.git`.
+First get a local copy of this repository on your machine with `git clone https://github.com/lukeeffenberger/caps-net`.
 
 ### Training and Testing
 You can simply train the network with `python capsnet_mnist.py -m train`. The best model (lowest validation loss), which
 is found during the training process will be stored in `tmp/model_weights/`. The summaries for TensorBoard will be stored in
-`tmp/summaries`. If you want to train the pretrained model with the weights stored in `model_weights/` use
+`tmp/summaries`. If you want to train the pretrained model with the weights stored in `model_weights/`, use
 `python capsnet_mnist.py -m train_on`.
 
 To have a look at the summaries in TensorBoard use `tensorboard --logdir=tmp/summaries`.
@@ -22,11 +22,11 @@ To investigate the "meaning" of the dimensions of different capsules you can mak
 `dimension_representation.ipynb`. It loads the weights stored in `model_weights/`. You can open it with 
 `jupyter notebook dimension_representation.ipynb`.
 
-There are two differenten functions in there:
+There are two different functions in there:
 
-- `random_digit_all_dimensions()`: This will just get a random sample for a random digit from the training data and perturb all dimensions, each at a time, and plot all the resulting images. This can be used to broadly explore what the reconstruction network does.
+- `random_digit_all_dimensions()`: This will just get a random sample for a random digit from the training data and perturb all dimensions, each one at a time, and plot all the resulting images. This can be used to broadly explore what the reconstruction network does.
 - `specific_digit_specific_dimension(digit, dimension)`: For a specified digit (0-9) this function will get a random sample for this digit from the training data and only plot the perturbation results for the specific dimension. This can be used to
-affirmate findings from the broad exploration before.
+affirm findings from the broad exploration before.
 
 ### Using the layer modules
 We implemented the different layers in classes for easily constructing new capsule networks. These clases can be found in the 
